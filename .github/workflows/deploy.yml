@@ -69,6 +69,7 @@ jobs:
       # 第八步：在服务器上部署 Docker 容器
       - name: 在服务器上部署 Docker 容器
         run: |
+          IMAGE_TAG="lobechat-${{ github.sha }}"
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} "
             docker pull registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG &&
             docker stop lobe-chat-database || true &&
