@@ -62,15 +62,15 @@ jobs:
             docker pull registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG &&
             docker stop lobe-chat-database || true &&
             docker rm lobe-chat-database || true &&
-            $ docker run -it -d --name lobe-chat-database -p 3210:3210
-              -e DATABASE_URL=${{ secrets.DATABASE_URL }}
-              -e KEY_VAULTS_SECRET=${{ secrets.KEY_VAULTS_SECRET }}
-              -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-              -e CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
-              -e CLERK_WEBHOOK_SECRET=${{ secrets.CLERK_WEBHOOK_SECRET }}
-              -e S3_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY_ID }}
-              -e S3_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_ACCESS_KEY }}
-              -e S3_BUCKET=${{ secrets.S3_BUCKET }}
-              -e S3_ENDPOINT=${{ secrets.S3_ENDPOINT }}
-              -e S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }}
+            docker run -it -d --name lobe-chat-database -p 3210:3210 \
+              -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+              -e KEY_VAULTS_SECRET=${{ secrets.KEY_VAULTS_SECRET }} \
+              -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }} \
+              -e CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }} \
+              -e CLERK_WEBHOOK_SECRET=${{ secrets.CLERK_WEBHOOK_SECRET }} \
+              -e S3_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY_ID }} \
+              -e S3_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_ACCESS_KEY }} \
+              -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
+              -e S3_ENDPOINT=${{ secrets.S3_ENDPOINT }} \
+              -e S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }} \
               registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG"
