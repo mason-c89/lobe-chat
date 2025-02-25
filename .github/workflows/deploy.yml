@@ -20,34 +20,37 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
-      # Step 3: Set up .env file
-      - name: Set up .env file
+      # Step 3: Build Docker image
+      - name: Build Docker image
         run: |
-          echo "NEXT_PUBLIC_SERVICE_MODE=${{ secrets.NEXT_PUBLIC_SERVICE_MODE }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "KEY_VAULTS_SECRET=${{ secrets.KEY_VAULTS_SECRET }}" >> .env
-          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}" >> .env
-          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" >> .env
-          echo "CLERK_WEBHOOK_SECRET=${{ secrets.CLERK_WEBHOOK_SECRET }}" >> .env
-          echo "S3_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY_ID }}" >> .env
-          echo "S3_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_ACCESS_KEY }}" >> .env
-          echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> .env
-          echo "S3_ENDPOINT=${{ secrets.S3_ENDPOINT }}" >> .env
-          echo "S3_PUBLIC_DOMAIN=${{ secrets.S3_PUBLIC_DOMAIN }}" >> .env
+          docker build -t lobechat:${{ github.run_number }} .
+          # 确保镜像构建成功
+          if [ $? -ne 0 ]; then
+            echo "Docker build failed!" && exit 1
+          fi
 
-      # Step 4: Copy files to server
-      - name: Copy files to server
+      # Step 4: Log in to Aliyun Docker registry
+      - name: Log in to Aliyun Docker registry
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} "
-            mkdir -p ${{ secrets.SERVER_DEPLOY_PATH }} &&
-            rm -rf ${{ secrets.SERVER_DEPLOY_PATH }}/* &&
-            exit"
-          scp -o StrictHostKeyChecking=no -r * ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_DEPLOY_PATH }}
+          echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin registry.cn-hangzhou.aliyuncs.com
+          # 检查登录是否成功
+          if [ $? -ne 0 ]; then
+            echo "Docker login failed!" && exit 1
+          fi
 
-      # Step 5: Run deployment script on server
-      - name: Run deployment script on server
+      # Step 5: Tag the Docker image for Aliyun registry
+      - name: Tag Docker image
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} "
-            cd ${{ secrets.SERVER_DEPLOY_PATH }} &&
-            docker-compose down &&
-            docker-compose up -d"
+          IMAGE_TAG="lobechat-${{ github.run_number }}-${{ github.sha }}"
+          docker tag lobechat:${{ github.run_number }} registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG
+          echo "Tagged Docker image as: $IMAGE_TAG"
+
+      # Step 6: Push Docker image to Aliyun registry
+      - name: Push Docker image to Aliyun registry
+        run: |
+          IMAGE_TAG="lobechat-${{ github.run_number }}-${{ github.sha }}"
+          docker push registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG
+          # 确保推送成功
+          if [ $? -ne 0 ]; then
+            echo "Docker push failed!" && exit 1
+          fi
