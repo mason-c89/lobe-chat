@@ -1,62 +1,73 @@
-name: Deploy to Server
+name: 部署到服务器
 
 on:
   push:
     branches:
-      - main  # 你可以根据实际需求修改触发部署的分支
+      - main  # 根据实际需求修改触发部署的分支
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout code
+      # 第一步：检出代码
+      - name: 检出代码
         uses: actions/checkout@v2
 
-      # Step 2: Set up SSH key
-      - name: Set up SSH
+      # 第二步：设置 SSH 密钥
+      - name: 设置 SSH 密钥
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
-      # Step 3: Build Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t lobechat:${{ github.run_number }} .
-          # 确保镜像构建成功
-          if [ $? -ne 0 ]; then
-            echo "Docker build failed!" && exit 1
-          fi
-
-      # Step 4: Log in to Aliyun Docker registry
-      - name: Log in to Aliyun Docker registry
+      # 第三步：登录到阿里云 Docker 镜像仓库
+      - name: 登录到阿里云 Docker 镜像仓库
         run: |
           echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login --username=${{ secrets.ALIYUN_USERNAME }} --password-stdin registry.cn-hangzhou.aliyuncs.com
           # 检查登录是否成功
           if [ $? -ne 0 ]; then
-            echo "Docker login failed!" && exit 1
+            echo "Docker 登录失败！" && exit 1
           fi
 
-      # Step 5: Tag the Docker image for Aliyun registry
-      - name: Tag Docker image
+      # 第四步：检查 Docker 镜像是否已存在
+      - name: 检查 Docker 镜像是否已存在
         run: |
-          IMAGE_TAG="lobechat-${{ github.run_number }}-${{ github.sha }}"
-          docker tag lobechat:${{ github.run_number }} registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG
-          echo "Tagged Docker image as: $IMAGE_TAG"
+          IMAGE_TAG="lobechat-${{ github.sha }}"
+          if docker pull registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG; then
+            echo "镜像 $IMAGE_TAG 已存在，跳过构建步骤。"
+            exit 0
+          else
+            echo "镜像 $IMAGE_TAG 不存在，继续构建镜像。"
+          fi
 
-      # Step 6: Push Docker image to Aliyun registry
-      - name: Push Docker image to Aliyun registry
+      # 第五步：构建 Docker 镜像
+      - name: 构建 Docker 镜像
         run: |
-          IMAGE_TAG="lobechat-${{ github.run_number }}-${{ github.sha }}"
+          docker build -t lobechat:${{ github.sha }} .
+          # 确保镜像构建成功
+          if [ $? -ne 0 ]; then
+            echo "Docker 镜像构建失败！" && exit 1
+          fi
+
+      # 第六步：给 Docker 镜像打标签
+      - name: 给 Docker 镜像打标签
+        run: |
+          IMAGE_TAG="lobechat-${{ github.sha }}"
+          docker tag lobechat:${{ github.sha }} registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG
+          echo "已将 Docker 镜像打标签为: $IMAGE_TAG"
+
+      # 第七步：将 Docker 镜像推送到阿里云镜像仓库
+      - name: 将 Docker 镜像推送到阿里云镜像仓库
+        run: |
+          IMAGE_TAG="lobechat-${{ github.sha }}"
           docker push registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG
           # 确保推送成功
           if [ $? -ne 0 ]; then
-            echo "Docker push failed!" && exit 1
+            echo "Docker 镜像推送失败！" && exit 1
           fi
           
-      # Step 7: Deploy Docker container on server (示例，确保替换服务器信息)
-      - name: Deploy Docker container on server
+      # 第八步：在服务器上部署 Docker 容器
+      - name: 在服务器上部署 Docker 容器
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} "
             docker pull registry.cn-hangzhou.aliyuncs.com/jie-images/practice:$IMAGE_TAG &&
