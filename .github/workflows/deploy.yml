@@ -32,7 +32,7 @@ jobs:
       # Step 4: Log in to Aliyun Docker registry
       - name: Log in to Aliyun Docker registry
         run: |
-          echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin registry.cn-hangzhou.aliyuncs.com
+          echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login --username=${{ secrets.ALIYUN_USERNAME }} --password-stdin registry.cn-hangzhou.aliyuncs.com
           # 检查登录是否成功
           if [ $? -ne 0 ]; then
             echo "Docker login failed!" && exit 1
