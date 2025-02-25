@@ -75,7 +75,7 @@ jobs:
             docker stop lobe-chat-database || true &&
             docker rm lobe-chat-database || true &&
             docker run -it -d --name lobe-chat-database -p 3210:3210 \
-              -e NEXT_PUBLIC_SERVICE_MODE=${{ secrets.NEXT_PUBLIC_SERVICE_MODE }}
+              -e NEXT_PUBLIC_SERVICE_MODE=${{ secrets.NEXT_PUBLIC_SERVICE_MODE }} \
               -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
               -e KEY_VAULTS_SECRET=${{ secrets.KEY_VAULTS_SECRET }} \
               -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }} \
